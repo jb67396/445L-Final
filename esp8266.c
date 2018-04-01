@@ -236,6 +236,7 @@ void ESP8266_InitUART(uint32_t baud, int echo){ volatile int delay;
 // called on one receiver data input followed by timeout
 // or     on going from 1 to 2 data input characters
 void UART1_Handler(void){
+	//long sr = StartCritical();
   if(UART1_RIS_R & UART_RIS_RXRIS){   // rx fifo >= 1/8 full
     UART1_ICR_R = UART_ICR_RXIC;      // acknowledge interrupt
     ESP8266FIFOtoBuffer();
@@ -244,6 +245,7 @@ void UART1_Handler(void){
     UART1_ICR_R = UART_ICR_RTIC;      // acknowledge receiver time
     ESP8266FIFOtoBuffer();
   }
+	//EndCritical(sr);
 }
 //--------ESP8266_EnableRXInterrupt--------
 // - enables uart rx interrupt
@@ -358,47 +360,21 @@ void DelayMsSearching(uint32_t n){
 void ESP8266_Init(uint32_t baud){
   ESP8266_InitUART(baud,true); // baud rate, no echo to UART0
   ESP8266_EnableRXInterrupt();
-  SearchLooking = false;
+  /*SearchLooking = false;
   SearchFound = false;
   ServerResponseSearchLooking = 0; // not looking for "+IPD"
-  ServerResponseSearchFinished = 0;
+  ServerResponseSearchFinished = 0;*/
   EnableInterrupts();
 // step 1: AT+RST reset module
-  printf("ESP8266 Initialization:\n\r");
-  ESP8266_EchoResponse = true; // debugging
+  /*printf("ESP8266 Initialization:\n\r");
+  //ESP8266_EchoResponse = true; // debugging
   if(ESP8266_Reset()==0){ 
     printf("Reset failure, could not reset\n\r"); while(1){};
-  }
-//  ESP8266SendCommand("AT+UART_CUR=115200,8,1,0,0\r\n");
+  }*/
+	ESP8266SendCommand("AT+UART_CUR=115200,8,1,0,0\r\n");
 //  UART_InChar();
 
-//  ESP8266_InitUART(115200,true);
-  
-// step 2: AT+CWMODE=1 set wifi mode to client (not an access point)
-  if(ESP8266_SetWifiMode(ESP8266_WIFI_MODE_CLIENT)==0){ 
-    printf("SetWifiMode, could not set mode\n\r"); while(1){};
-  }
-// step 3: AT+CWJAP="ValvanoAP","12345678"  connect to access point 
-  if(ESP8266_JoinAccessPoint(SSID_NAME,PASSKEY)==0){ 
-    printf("JoinAccessPoint error, could not join AP\n\r"); while(1){};
-  }
-// optional step: AT+CIFSR check to see our IP address
-  if(ESP8266_GetIPAddress()==0){ // data streamed to UART0, OK
-    printf("GetIPAddress error, could not get IP address\n\r"); while(1){};
-  } 
-//// optional step: AT+CIPMUX==0 set mode to single socket 
-//  if(ESP8266_SetConnectionMux(0)==0){ // single socket
-//    printf("SetConnectionMux error, could not set connection mux\n\r"); while(1){};
-//  } 
-// optional step: AT+CWLAP check to see other AP in area
-  if(ESP8266_ListAccessPoints()==0){ 
-    printf("ListAccessPoints, could not list access points\n\r"); while(1){};
-  }
-// step 4: AT+CIPMODE=0 set mode to not data mode
-  if(ESP8266_SetDataTransmissionMode(0)==0){ 
-    printf("SetDataTransmissionMode, could not make connection\n\r"); while(1){};
-  }
-  ESP8266_InputProcessingEnabled = false; // not a server
+	ESP8266_InitUART(115200,true);
 }
 
 //----------ESP8266_Reset------------
