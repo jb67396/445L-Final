@@ -192,6 +192,9 @@ void setBuff(int value, char* buffer){
 	instructionBuffer = buffer;
 }
 
+volatile short messageCount = 0;
+volatile short messageIndex = 0;
+volatile short lineIndex = 5;
 volatile int rPower = 0;
 volatile int lPower = 0;
 volatile int powerSet = 0;
@@ -201,7 +204,7 @@ void setRobotStatus(){
 		// This is just for debugging
 		// Will have globals set based off inputs
 		// Display will be triggered off global flag updates
-		processBuff = 0;
+		//processBuff = 0;
 		ST7735_SetCursor(0,0);
 		// Button 1 is pressed
 		if(instructionBuffer[2] == '1'){
@@ -234,8 +237,29 @@ void setRobotStatus(){
 		// Button 3 is pressed
 		if(instructionBuffer[6] == '1'){
 			ST7735_OutChar('1');
+			if(messageIndex > 19){
+				messageIndex = 0;
+				lineIndex++;
+			}
+			ST7735_SetCursor(messageIndex, lineIndex);
+			if(instructionBuffer[14] != 0){
+				if(messageCount == 0){
+					messageCount++;
+				}
+				else{
+					ST7735_OutChar(instructionBuffer[14]);
+					messageIndex++;
+					messageCount = 0;
+				}
+			}
 		}
 		else{
+			if(messageIndex != 0 || lineIndex != 0){
+				ST7735_FillRect(0, 50, 120, 10 * (lineIndex - 4), ST7735_BLACK);
+				lineIndex = 5;
+				messageIndex = 0;
+				messageCount = 0;
+			}
 			ST7735_OutChar('0');
 		}
 		ST7735_SetCursor(0,3);
@@ -247,12 +271,12 @@ void setRobotStatus(){
 		//ST7735_OutChar(instructionBuffer[13]);
 		ST7735_SetCursor(0,4);
 		//Output y coord
-		//ST7735_OutChar(instructionBuffer[11]);
+		ST7735_OutChar(instructionBuffer[11]);
 		ST7735_OutChar(instructionBuffer[12]);
 		ST7735_OutChar(instructionBuffer[13]);
-		ST7735_OutChar(instructionBuffer[14]);
+		
 		//ST7735_OutChar(instructionBuffer[18]);
-		ST7735_SetCursor(0,5);
+		ST7735_SetCursor(0,6);
 		
 		powerSet = ((instructionBuffer[7] - 0x30) * 100) + (instructionBuffer[9] - 0x30) * 10 + (instructionBuffer[10] - 0x30);
 		powerAngle = ((instructionBuffer[12] - 0x30) * 100) + (instructionBuffer[13] - 0x30) * 10 + (instructionBuffer[14] - 0x30);
@@ -307,6 +331,7 @@ void setRobotStatus(){
 		else{
 			Right_DutyB(rPower * 120, 1);
 		}
+		processBuff = 0;
 }
 
 /* 
